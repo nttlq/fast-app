@@ -16,3 +16,8 @@ class CommentIn(BaseModel):
 
 class Comment(CommentIn):
     id: int
+
+
+class UserPostWithComments(BaseModel):
+    post: UserPost
+    comments: list[Comment]

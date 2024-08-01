@@ -7,4 +7,4 @@ exclude =
     env
     .env
     .venv
-max-line-length = 79
+max-line-length = 88
