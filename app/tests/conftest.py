@@ -1,11 +1,15 @@
+import os
 from typing import AsyncGenerator, Generator
 
 import pytest
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
 from app.routers.post import comment_table, post_table
+
+os.environ["ENV_STATE"] = "test"
+
+from app.main import app  # noqa: E402
 
 
 @pytest.fixture(scope="session")
