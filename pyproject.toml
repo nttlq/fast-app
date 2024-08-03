@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "app"
+name = "fast-app"
 version = "0.1.0"
 description = ""
 authors = ["nttlq <tllm@bk.ru>"]
@@ -12,6 +12,8 @@ pytest = "^8.3.2"
 sqlalchemy = "^2.0.31"
 psycopg = "^3.2.1"
 asyncpg = "^0.29.0"
+pydantic-settings = "^2.4.0"
+alembic = "^1.13.2"
 
 
 [tool.poetry.group.dev.dependencies]
