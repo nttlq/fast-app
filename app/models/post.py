@@ -1,23 +1,12 @@
-from pydantic import BaseModel
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.database import Base
 
 
-class UserPostIn(BaseModel):
-    body: str
+class Post(Base):
+    __tablename__ = "posts"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    body: Mapped[str]
 
-
-class UserPost(UserPostIn):
-    id: int
-
-
-class CommentIn(BaseModel):
-    body: str
-    post_id: int
-
-
-class Comment(CommentIn):
-    id: int
-
-
-class UserPostWithComments(BaseModel):
-    post: UserPost
-    comments: list[Comment]
+    def __repr__(self) -> str:
+        return f"Post(id={self.id}, body={self.body})"
