@@ -1,14 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from typing import Annotated
 
-from app.models.post import (
-    Comment,
-    CommentIn,
-    UserPost,
-    UserPostIn,
-    UserPostWithComments,
-)
+from fastapi import APIRouter, HTTPException, Path, status
 
-router = APIRouter()
+from app.schemas import CommentOut, UserPostIn, UserPostOut, UserPostWithCommentsOut
+
+router = APIRouter(prefix="/post", tags=["Posts"])
 
 
 post_table = {}
@@ -28,7 +24,12 @@ def find_all_comments(post_id: int):
     return comments
 
 
-@router.post("/post", response_model=UserPost, status_code=201)
+@router.get("", response_model=list[UserPostOut])
+async def get_all_posts():
+    return list(post_table.values())
+
+
+@router.post("", response_model=UserPostOut, status_code=status.HTTP_201_CREATED)
 async def create_post(post: UserPostIn):
     data = post.model_dump()
     last_record_id = len(post_table)
@@ -38,52 +39,37 @@ async def create_post(post: UserPostIn):
     return new_post
 
 
-@router.get("/post", response_model=list[UserPost])
-async def get_all_posts():
-    return list(post_table.values())
-
-
-@router.post("/comment", response_model=Comment, status_code=201)
-async def create_comment(comment: CommentIn):
-    post = find_post(comment.post_id)
-    if post is None:
-        raise HTTPException(status_code=404, detail="Post not Found")
-
-    data = comment.model_dump()
-    last_comm_id = len(comment_table)
-    new_comment = {**data, "id": last_comm_id}
-    comment_table[last_comm_id] = new_comment
-
-    return new_comment
-
-
-@router.get("/comment", response_model=list[Comment])
-async def get_all_comments(post_id: int):
-    post = find_post(post_id)
-    if post is None:
-        raise HTTPException(status_code=404, detail="Post not Found")
-    print(f"all comments: {comment_table}")
-    comments = find_all_comments(post_id)
-    if comments == []:
-        raise HTTPException(status_code=404, detail="Comments not found")
-
-    return comments
-
-
-@router.get("/post/{post_id}/comment", response_model=list[Comment])
-async def get_comments_on_post(post_id: int):
+@router.get("/{post_id}/comment", response_model=list[CommentOut])
+async def get_comments_on_post(post_id: Annotated[int, Path(ge=0)]):
     return [
         comment for comment in comment_table.values() if comment["post_id"] == post_id
     ]
 
 
-@router.get("/post/{post_id}", response_model=UserPostWithComments)
-async def get_post_with_comments(post_id: int):
+@router.get("/{post_id}", response_model=UserPostWithCommentsOut)
+async def get_post_with_comments(post_id: Annotated[int, Path(ge=0)]):
     post = find_post(post_id)
     if post is None:
-        raise HTTPException(status_code=404, detail="Post not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Post not found"
+        )
 
     return {
         "post": post,
         "comments": await get_comments_on_post(post_id),
     }
+
+
+from sqlalchemy import and_, or_, select
+
+from app.database import async_session_factory
+from app.models import Post
+
+
+@router.get("/check")
+async def check_db():
+    async with async_session_factory() as session:
+        query = select(Post.body).where(and_(Post.body == "New post", Post.id == 1))
+        result = await session.execute(query)
+        await session.commit()
+        return result.scalars().all()
