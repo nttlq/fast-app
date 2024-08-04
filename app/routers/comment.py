@@ -14,7 +14,7 @@ async def find_post(post_id: int):
         query = select(Post).where(Post.id == post_id)
         res = await session.execute(query)
         await session.commit()
-        return res.one_or_none()
+        return res.scalar_one_or_none()
 
 
 def find_all_comments(post_id: int):
@@ -31,7 +31,7 @@ async def get_last_record_id():
         query = select(Comment.id).order_by(Comment.id.desc()).limit(1)
         res = await session.execute(query)
         await session.commit()
-        return res.scalar_one()
+        return res.scalar_one_or_none()
 
 
 @router.post("", response_model=CommentOut, status_code=status.HTTP_201_CREATED)
@@ -44,7 +44,7 @@ async def create_comment(comment: CommentIn):
 
     data = comment.model_dump()
     last_comm_id = await get_last_record_id()
-    new_comment = {**data, "id": last_comm_id}
+    new_comment = {**data, "id": last_comm_id + 1 if last_comm_id is not None else 1}
     # comment_table[last_comm_id] = new_comment
 
     async with async_session_factory() as session:

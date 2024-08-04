@@ -28,7 +28,7 @@ async def get_last_record_id():
         query = select(Post.id).order_by(Post.id.desc()).limit(1)
         res = await session.execute(query)
         await session.commit()
-        return res.scalar_one()
+        return res.scalar_one_or_none()
 
 
 @router.get("", response_model=list[UserPostOut])
@@ -45,7 +45,7 @@ async def get_all_posts():
 async def create_post(post: UserPostIn):
     data = post.model_dump()
     last_record_id = await get_last_record_id()
-    new_post = {**data, "id": last_record_id + 1}
+    new_post = {**data, "id": last_record_id + 1 if last_record_id is not None else 1}
     print(f"{data}")
     print(new_post)
     async with async_session_factory() as session:
