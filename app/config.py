@@ -18,6 +18,7 @@ class GlobalConfig(BaseConfig):
     DB_PASS: str
     DB_NAME: str
     DB_FORCE_ROLL_BACK: bool = False
+    LOGTAIL_API_KEY: Optional[str] = None
 
     @property
     def DATABASE_URL(self): ...

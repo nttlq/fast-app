@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Path, status
@@ -9,14 +10,14 @@ from app.schemas import CommentOut, UserPostIn, UserPostOut, UserPostWithComment
 
 router = APIRouter(prefix="/post", tags=["Posts"])
 
-
-post_table = {}
-comment_table = {}
+logger = logging.getLogger(__name__)
 
 
 async def find_post(post_id: int):
+    logger.info(f"Finding post with id: {post_id}")
     async with async_session_factory() as session:
         query = select(Post).where(Post.id == post_id)
+        logger.debug(query)
         res = await session.execute(query)
         await session.commit()
 
@@ -34,8 +35,10 @@ async def get_last_record_id():
 @router.get("", response_model=list[UserPostOut])
 async def get_all_posts():
     """Get all posts from the database"""
+    logger.info("Getting all posts")
     async with async_session_factory() as session:
         query = select(Post)
+        logger.debug(query)
         result = await session.execute(query)
         await session.commit()
         return result.scalars().all()
@@ -51,14 +54,17 @@ async def create_post(post: UserPostIn):
     async with async_session_factory() as session:
         stmt = Post(body=post.body)
         session.add(stmt)
+        logger.debug(f"query: {stmt}")
         await session.commit()
         return new_post
 
 
 @router.get("/{post_id}/comment", response_model=list[CommentOut])
 async def get_comments_on_post(post_id: Annotated[int, Path(ge=0)]):
+    logger.info(f"Getting comments on post with id: {post_id}")
     async with async_session_factory() as session:
         query = select(Comment).where(Comment.post_id == post_id)
+        logger.debug(query)
         res = await session.execute(query)
         await session.commit()
         return res.scalars().all()
@@ -66,6 +72,7 @@ async def get_comments_on_post(post_id: Annotated[int, Path(ge=0)]):
 
 @router.get("/{post_id}", response_model=UserPostWithCommentsOut)
 async def get_post_with_comments(post_id: Annotated[int, Path(ge=0)]):
+    logger.info(f"Getting post with id: {post_id}")
     post = await find_post(post_id)
     if post is None:
         raise HTTPException(
