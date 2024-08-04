@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.schemas import CommentOut
 
@@ -8,6 +8,7 @@ class UserPostIn(BaseModel):
 
 
 class UserPostOut(UserPostIn):
+    model_config = ConfigDict(from_attributes=True)
     id: int
 
 
